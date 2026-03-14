@@ -7,6 +7,7 @@ import json
 from typing import Any
 from ollama import chat
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -41,11 +42,9 @@ def extract_action_items(text: str) -> List[str]:
         if _is_action_line(line):
             cleaned = BULLET_PREFIX_PATTERN.sub("", line)
             cleaned = cleaned.strip()
-            # Trim common checkbox markers
             cleaned = cleaned.removeprefix("[ ]").strip()
             cleaned = cleaned.removeprefix("[todo]").strip()
             extracted.append(cleaned)
-    # Fallback: if nothing matched, heuristically split into sentences and pick imperative-like ones
     if not extracted:
         sentences = re.split(r"(?<=[.!?])\s+", text.strip())
         for sentence in sentences:
@@ -54,7 +53,6 @@ def extract_action_items(text: str) -> List[str]:
                 continue
             if _looks_imperative(s):
                 extracted.append(s)
-    # Deduplicate while preserving order
     seen: set[str] = set()
     unique: List[str] = []
     for item in extracted:
@@ -71,7 +69,6 @@ def _looks_imperative(sentence: str) -> bool:
     if not words:
         return False
     first = words[0]
-    # Crude heuristic: treat these as imperative starters
     imperative_starters = {
         "add",
         "create",
@@ -87,3 +84,44 @@ def _looks_imperative(sentence: str) -> bool:
         "investigate",
     }
     return first.lower() in imperative_starters
+
+class ActionItemsSchema(BaseModel):
+    items: List[str]
+
+def extract_action_items_llm(text: str) -> List[str]:
+    """
+    Extracts action items from free-form text using a local LLM via Ollama.
+    Enforces a structured JSON output (List of strings).
+    """
+    if not text.strip():
+        return []
+
+    system_prompt = """
+    You are an expert task extraction assistant. Your job is to read the user's notes and extract all actionable tasks, to-dos, or action items.
+    If the text contains no actionable items, return an empty list.
+    You MUST output ONLY valid JSON matching the provided schema. Do not include markdown formatting like ```json or any other text.
+    """
+
+    try:
+        response = chat(
+            model="llama3.1:8b",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": text},
+            ],
+            format=ActionItemsSchema.model_json_schema(),
+            options={"temperature": 0.1}
+        )
+        
+        result_text = response.message.content.strip()
+        
+        if result_text.startswith("```json"):
+            result_text = result_text.replace("```json", "").replace("```", "").strip()
+            
+        data = json.loads(result_text)
+        
+        return data.get("items", [])
+        
+    except Exception as e:
+        print(f"LLM Extraction failed: {e}")
+        return extract_action_items(text)

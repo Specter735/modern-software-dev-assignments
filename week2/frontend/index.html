@@ -7,23 +7,33 @@
     <style>
       body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif; margin: 2rem auto; max-width: 800px; padding: 0 1rem; }
       h1 { font-size: 1.5rem; }
-      textarea { width: 100%; min-height: 160px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace; }
-      button { padding: 0.5rem 1rem; }
-      .items { margin-top: 1rem; }
+      textarea { width: 100%; min-height: 160px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace; margin-bottom: 0.5rem; }
+      button { padding: 0.5rem 1rem; cursor: pointer; }
+      .items { margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 1rem; }
       .item { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0; }
+      .note-item { background: #f9fafb; padding: 0.75rem; border-radius: 4px; margin-bottom: 0.5rem; border: 1px solid #e5e7eb; }
+      .note-date { font-size: 0.75rem; color: #6b7280; display: block; margin-top: 0.25rem; }
       .muted { color: #6b7280; font-size: 0.875rem; }
-      .row { display: flex; gap: 0.5rem; align-items: center; }
+      .row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+      .btn-primary { background-color: #2563eb; color: white; border: none; border-radius: 4px; }
+      .btn-secondary { background-color: #10b981; color: white; border: none; border-radius: 4px; }
+      .btn-outline { background-color: white; color: #4b5563; border: 1px solid #d1d5db; border-radius: 4px; }
     </style>
   </head>
   <body>
     <h1>Action Item Extractor</h1>
-    <p class="muted">Paste notes and extract actionable items. Minimal raw HTML frontend.</p>
+    <p class="muted">Paste notes and extract actionable items using Regex or LLM.</p>
 
     <label for="text">Notes</label>
-    <textarea id="text" placeholder="Paste notes here...&#10;e.g.&#10;- [ ] Set up database&#10;- Implement extract endpoint"></textarea>
+    <textarea id="text" placeholder="Paste notes here...&#10;e.g.&#10;Please review the PR and update the documentation."></textarea>
+    
     <div class="row">
-      <label class="row"><input id="save_note" type="checkbox" checked /> Save as note</label>
-      <button id="extract">Extract</button>
+      <label class="row" style="margin-right: 1rem;"><input id="save_note" type="checkbox" checked /> Save as note</label>
+      
+      <button id="extract" class="btn-primary">Extract (Regex)</button>
+      
+      <button id="extract-llm" class="btn-secondary">Extract (LLM)</button>
+      <button id="list-notes" class="btn-outline">List All Notes</button>
     </div>
 
     <div class="items" id="items"></div>
@@ -31,11 +41,36 @@
     <script>
       const $ = (sel) => document.querySelector(sel);
       const itemsEl = $('#items');
-      const btn = $('#extract');
-      btn.addEventListener('click', async () => {
+      const btnExtractRegex = $('#extract');
+      const btnExtractLLM = $('#extract-llm');
+      const btnListNotes = $('#list-notes');
+
+      // helper
+      const renderActionItems = (items) => {
+        if (!items || items.length === 0) {
+            itemsEl.innerHTML = '<p class="muted">No action items found.</p>';
+            return;
+        }
+        itemsEl.innerHTML = '<h3>Extracted Tasks:</h3>' + items.map(it => (
+            `<div class="item"><input type="checkbox" data-id="${it.id}" /> <span>${it.text}</span></div>`
+        )).join('');
+        
+        itemsEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', async (e) => {
+                const id = e.target.getAttribute('data-id');
+                await fetch(`/action-items/${id}/done`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ done: e.target.checked }),
+                });
+            });
+        });
+      };
+      // regex 
+      btnExtractRegex.addEventListener('click', async () => {
         const text = $('#text').value;
         const save = $('#save_note').checked;
-        itemsEl.textContent = 'Extracting...';
+        itemsEl.innerHTML = '<p class="muted">Extracting via Regex...</p>';
         try {
           const res = await fetch('/action-items/extract', {
             method: 'POST',
@@ -44,31 +79,63 @@
           });
           if (!res.ok) throw new Error('Request failed');
           const data = await res.json();
-          if (!data.items || data.items.length === 0) {
-            itemsEl.innerHTML = '<p class="muted">No action items found.</p>';
-            return;
-          }
-          itemsEl.innerHTML = data.items.map(it => (
-            `<div class="item"><input type="checkbox" data-id="${it.id}" /> <span>${it.text}</span></div>`
-          )).join('');
-          itemsEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', async (e) => {
-              const id = e.target.getAttribute('data-id');
-              await fetch(`/action-items/${id}/done`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ done: e.target.checked }),
-              });
-            });
-          });
+          renderActionItems(data.items);
         } catch (err) {
           console.error(err);
-          itemsEl.textContent = 'Error extracting items';
+          itemsEl.textContent = 'Error extracting items.';
+        }
+      });
+
+      // LLM extraction
+      btnExtractLLM.addEventListener('click', async () => {
+        const text = $('#text').value;
+        const save = $('#save_note').checked;
+        itemsEl.innerHTML = '<p class="muted">Thinking (LLM)... Please wait.</p>';
+        try {
+          const res = await fetch('/action-items/extract-llm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, save_note: save }),
+          });
+          if (!res.ok) throw new Error('Request failed');
+          const data = await res.json();
+          renderActionItems(data.items);
+        } catch (err) {
+          console.error(err);
+          itemsEl.innerHTML = '<p class="muted" style="color:red;">Error extracting via LLM. Make sure Ollama is running.</p>';
+        }
+      });
+
+      // list all notes
+      btnListNotes.addEventListener('click', async () => {
+        itemsEl.innerHTML = '<p class="muted">Fetching notes...</p>';
+        try {
+          // memanggil endpoint notes GET
+          const res = await fetch('/notes');
+          if (!res.ok) throw new Error('Request failed');
+          const data = await res.json();
+          
+          if (!data || data.length === 0) {
+            itemsEl.innerHTML = '<p class="muted">No notes found in the database.</p>';
+            return;
+          }
+          
+          // render daftar notes
+          itemsEl.innerHTML = '<h3>Saved Notes:</h3>' + data.map(note => {
+            const date = new Date(note.created_at).toLocaleString();
+            return `
+              <div class="note-item">
+                <div>${note.content.replace(/\n/g, '<br/>')}</div>
+                <span class="note-date">Saved on: ${date}</span>
+              </div>
+            `;
+          }).join('');
+        } catch (err) {
+          console.error(err);
+          itemsEl.textContent = 'Error fetching notes.';
         }
       });
 
     </script>
   </body>
-  </html>
-
-
+</html>
