@@ -1,4 +1,23 @@
+from typing import Generic, TypeVar
+
 from pydantic import BaseModel
+
+T = TypeVar("T")
+
+
+class SuccessEnvelope(BaseModel, Generic[T]):
+    ok: bool = True
+    data: T
+
+
+class ErrorDetail(BaseModel):
+    code: str
+    message: str
+
+
+class ErrorEnvelope(BaseModel):
+    ok: bool = False
+    error: ErrorDetail
 
 
 class NoteCreate(BaseModel):
@@ -17,6 +36,10 @@ class NoteRead(BaseModel):
 
 class ActionItemCreate(BaseModel):
     description: str
+
+
+class BulkCompleteRequest(BaseModel):
+    ids: list[int]
 
 
 class ActionItemRead(BaseModel):
