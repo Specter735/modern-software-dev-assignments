@@ -7,7 +7,33 @@ load_dotenv()
 NUM_RUNS_TIMES = 5
 
 # TODO: Fill this in!
-YOUR_SYSTEM_PROMPT = ""
+YOUR_SYSTEM_PROMPT = """You are a highly obedient AI assistant. Your ONLY task is to reverse the letters of the given word. 
+You must output EXACTLY the reversed word and absolutely nothing else. No punctuation, no quotes.
+
+Example 1:
+User: Reverse the order of letters in the following word. Only output the reversed word, no other text:
+
+http
+Assistant: ptth
+
+Example 2:
+User: Reverse the order of letters in the following word. Only output the reversed word, no other text:
+
+status
+Assistant: sutats
+
+Example 3:
+User: Reverse the order of letters in the following word. Only output the reversed word, no other text:
+
+httprequest
+Assistant: tseuqerptth
+
+Example 4:
+User: Reverse the order of letters in the following word. Only output the reversed word, no other text:
+
+httpstatus
+Assistant: sutatsptth
+"""
 
 USER_PROMPT = """
 Reverse the order of letters in the following word. Only output the reversed word, no other text:

@@ -84,14 +84,19 @@ Added "Extract LLM" and "List Notes" buttons, along with their corresponding Jav
 
 ### Exercise 5: Generate a README from the Codebase
 Prompt: 
-```
-TODO
+```text
+@workspace Please act as a technical writer and analyze this entire codebase. Generate a comprehensive `README.md` file for this FastAPI Action Item Extractor project. The README MUST include: 
+1. A brief overview of the project and its LLM integration.
+2. Step-by-step instructions on how to set up the environment, run the database migrations, and start the uvicorn server.
+3. A list of all available API endpoints (notes and action-items).
+4. Instructions for running the pytest suite.
+Format it beautifully using Markdown.
 ``` 
 
 Generated Code Snippets:
-```
-TODO: List all modified code files with the relevant line numbers.
-```
+File: README.md
+Lines: 1-100 (Entire newly created file)
+Cursor successfully parsed the codebase architecture (FastAPI, SQLite, Ollama integration, Pytest) and generated a structured documentation file detailing the setup, API routes, and testing commands.
 
 
 ## SUBMISSION INSTRUCTIONS

@@ -37,8 +37,14 @@ QUESTION = (
 
 
 # TODO: Fill this in!
-YOUR_SYSTEM_PROMPT = ""
-
+YOUR_SYSTEM_PROMPT = """You are a senior backend engineer. Your task is to write a single Python function exactly as requested.
+You MUST follow these strict rules:
+1. Base your entire implementation ONLY on the provided Context. Do not invent endpoints or headers.
+2. Do not write any explanations, comments, or examples outside the code block.
+3. Your output must contain ONLY one fenced Python code block starting with ```python and ending with ```.
+4. Always import the necessary libraries (e.g., `import requests`) at the top of the code block.
+5. You must raise an exception for any non-200 HTTP response status.
+"""
 
 # For this simple example
 # For this coding task, validate by required snippets rather than exact string
@@ -52,11 +58,8 @@ REQUIRED_SNIPPETS = [
 
 
 def YOUR_CONTEXT_PROVIDER(corpus: List[str]) -> List[str]:
-    """TODO: Select and return the relevant subset of documents from CORPUS for this task.
-
-    For example, return [] to simulate missing context, or [corpus[0]] to include the API docs.
-    """
-    return []
+    """TODO: Select and return the relevant subset of documents from CORPUS for this task."""
+    return corpus
 
 
 def make_user_prompt(question: str, context_docs: List[str]) -> str:

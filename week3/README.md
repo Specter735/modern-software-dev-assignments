@@ -1,5 +1,4 @@
 # Week 3: TMDB Movie MCP Server
-
 This is a local Model Context Protocol (MCP) server that wraps the external **The Movie Database (TMDB) API**. It runs over STDIO transport and allows any MCP-compatible AI client to search for movies and retrieve detailed movie information.
 
 ## Features (MCP Tools)

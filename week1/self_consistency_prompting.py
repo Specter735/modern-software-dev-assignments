@@ -9,7 +9,16 @@ load_dotenv()
 NUM_RUNS_TIMES = 5
 
 # TODO: Fill this in! Try to get as close to 100% correctness across all runs as possible.
-YOUR_SYSTEM_PROMPT = ""
+YOUR_SYSTEM_PROMPT = """You are an incredibly logical and meticulous mathematical AI. Your task is to solve word problems with zero errors.
+You MUST use the following structured thinking process before calculating anything:
+1. Extract ALL the explicit numbers and their units from the prompt.
+2. Define the total quantity or distance.
+3. Identify the position of the first event/stop relative to the start.
+4. Identify the position of the second event/stop relative to the end.
+5. Formulate an algebraic equation to find the missing middle segment.
+6. Solve the equation step-by-step.
+7. Always conclude your final response on a new line in this exact format: Answer: <number>
+"""
 
 USER_PROMPT = """
 Solve this problem, then give the final answer on the last line as "Answer: <number>".

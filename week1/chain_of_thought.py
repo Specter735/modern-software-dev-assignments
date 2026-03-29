@@ -8,7 +8,15 @@ load_dotenv()
 NUM_RUNS_TIMES = 5
 
 # TODO: Fill this in!
-YOUR_SYSTEM_PROMPT = ""
+YOUR_SYSTEM_PROMPT = """You are an expert mathematician. You must solve the problem using a step-by-step Chain-of-Thought process.
+Follow these reasoning steps:
+1. Identify the base, the exponent, and the modulo.
+2. Since the exponent is extremely large, use mathematical properties like the Carmichael function or Euler's totient theorem to find the repeating cycle length.
+3. Divide the large exponent by this cycle length and find the remainder.
+4. Calculate the base raised to this new, smaller remainder modulo the given number.
+5. Once you have the final calculated remainder, you MUST output it on the very last line in this exact format:
+Answer: <number>
+"""
 
 
 USER_PROMPT = """
